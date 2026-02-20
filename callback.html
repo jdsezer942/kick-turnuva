@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
+<head><meta charset="UTF-8"></head>
 <body>
-    <p>Giriş yapılıyor...</p>
+    <p>Giriş başarılı! Blogger'a yönlendiriliyorsunuz...</p>
     <script>
         const code = new URLSearchParams(window.location.search).get('code');
         if (code) {
@@ -18,9 +19,12 @@
             })
             .then(res => res.json())
             .then(data => {
-                localStorage.setItem('kick_token', data.access_token);
-                window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
-            });
+                if (data.access_token) {
+                    localStorage.setItem('kick_token', data.access_token);
+                    window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
+                }
+            })
+            .catch(err => console.error(err));
         }
     </script>
 </body>
