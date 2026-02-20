@@ -2,59 +2,49 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Ramazan Özel Quiz - Yemek Turnuvası</title>
-  <style>body{background:#111;color:#fff;text-align:center;padding:20px;font-family:Arial;}button{background:#00ff00;color:black;padding:20px 40px;font-size:22px;border:none;border-radius:12px;cursor:pointer;margin:30px;}.option{border:3px solid #00ff00;padding:20px;margin:15px;border-radius:10px;cursor:pointer;font-size:20px;}</style>
+  <title>Ramazan Özel Quiz</title>
+  <style>body{background:#111;color:#fff;text-align:center;padding:20px;}button{background:#00ff00;color:black;padding:20px;font-size:24px;border:none;border-radius:10px;cursor:pointer;}.option{border:3px solid #00ff00;padding:20px;margin:10px;border-radius:10px;cursor:pointer;font-size:18px;}</style>
 </head>
 <body>
 
-<h1>🍲 Ramazan Özel Yemek Turnuvası</h1>
+<h1>🍽️ Yemek Turnuvası</h1>
 
-<div id="login" style="display:block;">
-  <button onclick="loginWithKick()">KICK İLE GİRİŞ YAP VE BAŞLA</button>
+<div id="login">
+  <button onclick="login()">KICK İLE GİRİŞ YAP VE BAŞLA</button>
 </div>
 
 <div id="game" style="display:none;">
-  <h2 id="title">Turnuva Başlıyor...</h2>
-  <div style="display:flex;justify-content:center;gap:40px;">
-    <div id="opt1" class="option" onclick="choose(0)"></div>
-    <div style="font-size:30px;font-weight:bold;">VS</div>
-    <div id="opt2" class="option" onclick="choose(1)"></div>
+  <h2 id="round">Tur</h2>
+  <div style="display:flex;justify-content:center;gap:30px;">
+    <div id="choice1" class="option" onclick="pick(0)"></div>
+    <div style="font-size:28px;">VS</div>
+    <div id="choice2" class="option" onclick="pick(1)"></div>
   </div>
-  <p id="info"></p>
+  <p id="match"></p>
 </div>
 
 <script>
-// AYARLAR - SECRET'İ BURAYA KOYMADIK (PKCE ile gerek olmayabilir, test et)
 const CLIENT_ID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
-const REDIRECT_URI = window.location.origin + "/callback.html"; // otomatik aynı domain
+const REDIRECT_URI = location.origin + '/callback.html';
 
-let items = ["Adana Kebap","İskender","Lahmacun","Mantı","Döner","Kumpir","Baklava","Sarma","Dolma","Pide","Pizza","Hamburger","Kebap","Çiğ Köfte","Menemen","Simit","Börek","Künefe","Sütlaç","Kazandibi"];
+let items = ["Adana Kebap", "İskender", "Lahmacun", "Mantı", "Döner", "Kumpir", "Baklava", "Sarma", "Dolma", "Pide", "Pizza", "Hamburger"];
+let currentRound = [], nextRound = [], matchIndex = 0;
 
-let current = [], next = [], idx = 0;
-
-// Token varsa oyunu başlat
 if (localStorage.getItem('kick_token')) {
   document.getElementById('login').style.display = 'none';
   document.getElementById('game').style.display = 'block';
-  startGame();
+  start();
 }
 
-// URL'de code var mı? (callback'ten dönünce)
-const params = new URLSearchParams(location.search);
-const code = params.get('code');
-if (code) {
-  getToken(code);
-}
-
-function loginWithKick() {
+function login() {
   const state = Math.random().toString(36).substring(2);
-  localStorage.setItem('state', state);
+  localStorage.setItem('kick_state', state);
 
   const verifier = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/[^a-zA-Z0-9]/g,'');
-  localStorage.setItem('verifier', verifier);
+  localStorage.setItem('kick_verifier', verifier);
 
-  crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)).then(h => {
-    const challenge = btoa(String.fromCharCode(...new Uint8Array(h))).replace(/[^a-zA-Z0-9]/g,'');
+  crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)).then(hash => {
+    const challenge = btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/[^a-zA-Z0-9]/g,'');
 
     const p = new URLSearchParams({
       client_id: CLIENT_ID,
@@ -70,67 +60,31 @@ function loginWithKick() {
   });
 }
 
-async function getToken(code) {
-  const verifier = localStorage.getItem('verifier');
-  const state = params.get('state');
+async function start() {
+  currentRound = [...items].sort(() => Math.random() - 0.5);
+  showMatch();
+}
 
-  if (state !== localStorage.getItem('state')) {
-    alert('Güvenlik hatası!');
-    location.href = '/';
+function showMatch() {
+  if (currentRound.length === 1) {
+    document.getElementById('game').innerHTML = `<h2>🏆 Şampiyon: ${currentRound[0]} 🏆</h2>`;
     return;
   }
-
-  try {
-    const res = await fetch('https://id.kick.com/oauth/token', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        grant_type: 'authorization_code',
-        client_id: CLIENT_ID,
-        code,
-        redirect_uri: REDIRECT_URI,
-        code_verifier: verifier
-        // client_secret'i ekleme - PKCE ile gerekmeyebilir, hata verirse Kick panelden al ve ekle
-      })
-    });
-
-    const data = await res.json();
-    if (data.access_token) {
-      localStorage.setItem('kick_token', data.access_token);
-      location.href = '/'; // ana sayfaya dön
-    } else {
-      alert('Token alınamadı: ' + (data.error || 'Hata'));
-    }
-  } catch(e) {
-    alert('Hata: ' + e.message + ' (F12 > Network bak)');
-  }
+  document.getElementById('round').innerText = currentRound.length + "'li Tur";
+  document.getElementById('choice1').innerText = currentRound[matchIndex];
+  document.getElementById('choice2').innerText = currentRound[matchIndex + 1];
+  document.getElementById('match').innerText = `Eşleşme ${Math.floor(matchIndex/2)+1} / ${currentRound.length/2}`;
 }
 
-function startGame() {
-  current = [...items].sort(() => Math.random() - 0.5);
-  show();
-}
-
-function show() {
-  if (current.length === 1) {
-    document.getElementById('game').innerHTML = `<h2>🏆 Şampiyon: ${current[0]} 🏆</h2>`;
-    return;
+function pick(n) {
+  nextRound.push(currentRound[matchIndex + n]);
+  matchIndex += 2;
+  if (matchIndex >= currentRound.length) {
+    currentRound = [...nextRound];
+    nextRound = [];
+    matchIndex = 0;
   }
-  document.getElementById('title').innerText = current.length + "'li Tur";
-  document.getElementById('opt1').innerText = current[idx];
-  document.getElementById('opt2').innerText = current[idx+1];
-  document.getElementById('info').innerText = `Eşleşme ${Math.floor(idx/2)+1} / ${current.length/2}`;
-}
-
-function choose(n) {
-  next.push(current[idx + n]);
-  idx += 2;
-  if (idx >= current.length) {
-    current = [...next];
-    next = [];
-    idx = 0;
-  }
-  show();
+  showMatch();
 }
 </script>
 </body>
