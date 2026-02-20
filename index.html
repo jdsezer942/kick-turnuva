@@ -1,53 +1,29 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head><meta charset="UTF-8"><title>Ramazan Özel Quiz</title></head>
-<body style="background:#111;color:#fff;font-family:sans-serif;text-align:center;padding:20px;">
-
-<h1>Ramazan Özel Quiz - Kick ile Giriş</h1>
-
-<div id="login-area">
-  <button onclick="startLogin()" style="background:#00ff00;color:black;padding:15px 30px;font-size:20px;border:none;border-radius:10px;cursor:pointer;">
+<head><meta charset="UTF-8"><title>Kick Turnuva</title></head>
+<body style="background:#111;color:#fff;text-align:center;padding:50px;font-family:Arial;">
+  <h1>🍽️ Ramazan Özel Yemek Turnuvası</h1>
+  <button onclick="startLogin()" style="background:#00ff00;color:black;padding:20px 40px;font-size:24px;border:none;border-radius:12px;cursor:pointer;">
     KICK İLE GİRİŞ YAP VE TURNUVAYA BAŞLA
   </button>
-</div>
-
-<div id="game-area" style="display:none;">
-  <h2 id="round-title">Turnuva Başlıyor</h2>
-  <!-- VS vs. buraya senin oyun HTML'ini koy -->
-  <p id="status">Token kontrol ediliyor...</p>
-</div>
 
 <script>
-// ────────────────────────────────────────────────
-// DEĞİŞKENLER - BURAYI DOLDUR
 const CLIENT_ID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
-const CLIENT_SECRET = "01KHSMYKTDM9DD6Y4HHBV0RYSB"; // Kick panelden al
 const REDIRECT_URI = "https://jdsezer942.github.io/kick-turnuva/callback.html";
-// ────────────────────────────────────────────────
-
-const token = localStorage.getItem('kick_token');
-if (token) {
-  document.getElementById('login-area').style.display = 'none';
-  document.getElementById('game-area').style.display = 'block';
-  document.getElementById('status').innerText = 'Giriş başarılı! Turnuva başlıyor...';
-  // Buraya senin turnuva start kodunu koy (items listesi vs.)
-  // Örnek: startTournament();
-} else {
-  document.getElementById('status').innerText = 'Lütfen giriş yapın.';
-}
 
 function startLogin() {
-  const state = Math.random().toString(36).substring(2);
+  const state = Math.random().toString(36).substring(2,20);
   localStorage.setItem('kick_state', state);
 
-  // Gerçek PKCE üret (basit versiyon)
-  const verifier = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/[=+/]/g,'');
+  const verifier = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+
   localStorage.setItem('kick_verifier', verifier);
 
-  const challengePromise = crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
-    .then(hash => btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/[=+/]/g,''));
+  crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)).then(hash => {
+    const challenge = btoa(String.fromCharCode(...new Uint8Array(hash)))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 
-  challengePromise.then(challenge => {
     const params = new URLSearchParams({
       client_id: CLIENT_ID,
       redirect_uri: REDIRECT_URI,
@@ -57,6 +33,7 @@ function startLogin() {
       code_challenge_method: 'S256',
       code_challenge: challenge
     });
+
     window.location.href = `https://id.kick.com/oauth/authorize?${params}`;
   });
 }
