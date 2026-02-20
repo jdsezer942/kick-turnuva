@@ -1,75 +1,46 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <title>Giriş Tamamlanıyor...</title>
-</head>
-<body>
-  <p>Giriş başarılı! Blogger’a dönülüyor...</p>
+<head><meta charset="UTF-8"><title>Giriş Tamamlanıyor...</title></head>
+<body style="background:#111;color:#fff;text-align:center;padding:50px;">
+  <p>Giriş tamamlanıyor, lütfen bekle...</p>
 
-  <script>
-    // ────────────────────────────────────────────────
-    // BURAYI DOLDUR (Kick panelinden al)
-    const CLIENT_ID     = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
-    const CLIENT_SECRET = "b089747d86bf523272990a3b9c9108b7d002ee0cd928fba42dd2104a4e7fe57e"; // ← Gerçek secret'ini buraya koy (Client ID değil!)
-    const REDIRECT_URI  = "https://jdsezer942.github.io/kick-turnuva/callback.html";
-    // ────────────────────────────────────────────────
+<script>
+const CLIENT_ID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
+const CLIENT_SECRET = "b089747d86bf523272990a3b9c9108b7d002ee0cd928fba42dd2104a4e7fe57e"; // senin secret
+const REDIRECT_URI = "https://jdsezer942.github.io/kick-turnuva/callback.html";
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const returnedState = urlParams.get('state');
-    const storedState = localStorage.getItem('kick_state');
+const params = new URLSearchParams(window.location.search);
+const code = params.get('code');
+const state = params.get('state');
 
-    if (!code) {
-      alert("Hata: Yetki kodu (code) alınamadı. Tekrar dene.");
-      window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
-      return;
-    }
+if (!code || state !== localStorage.getItem('kick_state')) {
+  alert("Hata oluştu. Tekrar dene.");
+  window.location.href = "https://jdsezer942.github.io/kick-turnuva/";
+  return;
+}
 
-    if (returnedState !== storedState) {
-      alert("Güvenlik hatası: State uyuşmuyor! (CSRF koruması başarısız)");
-      window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
-      return;
-    }
-
-    const verifier = localStorage.getItem('kick_code_verifier');
-
-    if (!verifier) {
-      alert("Code verifier kayboldu. Lütfen tekrar giriş yap.");
-      window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
-      return;
-    }
-
-    fetch('https://id.kick.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        grant_type: 'authorization_code',
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        code: code,
-        redirect_uri: REDIRECT_URI,
-        code_verifier: verifier
-      })
-    })
-    .then(res => {
-      if (!res.ok) {
-        return res.text().then(text => { throw new Error(`HTTP ${res.status}: ${text}`); });
-      }
-      return res.json();
-    })
-    .then(data => {
-      if (data.access_token) {
-        localStorage.setItem('kick_token', data.access_token);
-        // İstersen refresh_token da sakla: localStorage.setItem('kick_refresh', data.refresh_token);
-        window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
-      } else {
-        alert("Token alınamadı: " + (data.error_description || data.error || "Bilinmeyen hata"));
-      }
-    })
-    .catch(err => {
-      alert("Bağlantı / Token hatası: " + err.message + "\n\nF12 → Network sekmesinden /oauth/token isteğinin cevabını kontrol et.");
-    });
-  </script>
+fetch('https://id.kick.com/oauth/token', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({
+    grant_type: 'authorization_code',
+    client_id: CLIENT_ID,
+    client_secret: CLIENT_SECRET,
+    code: code,
+    redirect_uri: REDIRECT_URI,
+    code_verifier: localStorage.getItem('kick_verifier')
+  })
+})
+.then(r => r.json())
+.then(data => {
+  if (data.access_token) {
+    localStorage.setItem('kick_token', data.access_token);
+    window.location.href = "https://jdsezer942.github.io/kick-turnuva/"; // turnuva sayfası
+  } else {
+    alert("Token hatası: " + (data.error || "bilinmiyor"));
+  }
+})
+.catch(() => alert("Bağlantı hatası. Tekrar dene."));
+</script>
 </body>
 </html>
