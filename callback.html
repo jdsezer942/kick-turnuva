@@ -1,47 +1,69 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head><meta charset="UTF-8"><title>Giriş Tamamlanıyor...</title></head>
-<body style="background:#111;color:#fff;text-align:center;padding:50px;">
+<body style="background:#111;color:#fff;text-align:center;padding:50px;font-size:20px;">
   <p>Giriş tamamlanıyor, lütfen bekle...</p>
+  <p id="status">Durum: Bekleniyor...</p>
 
-<script>
-const CLIENT_ID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
-const CLIENT_SECRET = "b089747d86bf523272990a3b9c9108b7d002ee0cd928fba42dd2104a4e7fe57e"; // senin secret
-const REDIRECT_URI = "https://jdsezer942.github.io/kick-turnuva/callback.html";
+  <script>
+    document.getElementById('status').innerText = 'Code alındı → Token alınıyor...';
 
-const params = new URLSearchParams(window.location.search);
-const code = params.get('code');
-const state = params.get('state');
+    const CLIENT_ID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
+    const CLIENT_SECRET = "b089747d86bf523272990a3b9c9108b7d002ee0cd928fba42dd2104a4e7fe57e"; // secret'ini doğrula
+    const REDIRECT_URI = "https://jdsezer942.github.io/kick-turnuva/callback.html";
 
-if (!code || state !== localStorage.getItem('kick_state')) {
-  alert("Hata oluştu. Tekrar dene.");
-  window.location.href = "https://jdsezer942.github.io/kick-turnuva/";
-  return;
-}
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+    const state = params.get('state');
 
-fetch('https://id.kick.com/oauth/token', {
-  method: 'POST',
-  headers: {'Content-Type': 'application/json'},
-  body: JSON.stringify({
-    grant_type: 'authorization_code',
-    client_id: CLIENT_ID,
-    // client_secret: CLIENT_SECRET,   ← BU SATIRI YORUM YAP veya SİL
-    code: code,
-    redirect_uri: REDIRECT_URI,
-    code_verifier: localStorage.getItem('kick_verifier')
-  })
-})
-.then(r => r.json())
-.then(data => {
-  if (data.access_token) {
-    localStorage.setItem('kick_token', data.access_token);
-    window.location.href = "https://jdsezer942.github.io/kick-turnuva/"; // turnuva sayfası
-  } else {
-    alert("Token hatası: " + (data.error || "bilinmiyor"));
-  }
-})
-.catch(() => alert("Bağlantı hatası. Tekrar dene."));
-</script>
+    if (!code) {
+      document.getElementById('status').innerText = 'Hata: Code yok!';
+      alert('Code alınamadı!');
+      return;
+    }
+
+    if (state !== localStorage.getItem('kick_state')) {
+      document.getElementById('status').innerText = 'Hata: State uyuşmuyor!';
+      alert('Güvenlik hatası!');
+      return;
+    }
+
+    const verifier = localStorage.getItem('kick_verifier');
+    if (!verifier) {
+      alert('Verifier kayıp!');
+      return;
+    }
+
+    fetch('https://id.kick.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'authorization_code',
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,  // Eğer hata verirse bu satırı silip dene
+        code: code,
+        redirect_uri: REDIRECT_URI,
+        code_verifier: verifier
+      })
+    })
+    .then(res => {
+      document.getElementById('status').innerText = 'Yanıt: ' + res.status;
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(data => {
+      if (data.access_token) {
+        localStorage.setItem('kick_token', data.access_token);
+        document.getElementById('status').innerText = 'Başarılı! Turnuvaya dönülüyor...';
+        location.href = 'https://jdsezer942.github.io/kick-turnuva/';
+      } else {
+        alert('Token hatası: ' + (data.error || 'Bilinmiyor'));
+      }
+    })
+    .catch(err => {
+      document.getElementById('status').innerText = 'HATA: ' + err.message;
+      alert('Hata: ' + err.message + ' (F12 > Network bak)');
+    });
+  </script>
 </body>
 </html>
-
