@@ -25,7 +25,7 @@ fetch('https://id.kick.com/oauth/token', {
   body: JSON.stringify({
     grant_type: 'authorization_code',
     client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
+    // client_secret: CLIENT_SECRET,   ← BU SATIRI YORUM YAP veya SİL
     code: code,
     redirect_uri: REDIRECT_URI,
     code_verifier: localStorage.getItem('kick_verifier')
@@ -44,3 +44,4 @@ fetch('https://id.kick.com/oauth/token', {
 </script>
 </body>
 </html>
+
