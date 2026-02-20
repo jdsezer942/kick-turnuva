@@ -1,31 +1,73 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Giriş Tamamlanıyor...</title>
+</head>
 <body>
-    <p>Giriş başarılı! Blogger'a dönülüyor...</p>
-    <script>
-        const code = new URLSearchParams(window.location.search).get('code');
-        if (code) {
-            fetch('https://id.kick.com/oauth/token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    grant_type: 'authorization_code',
-                    client_id: '01KHSMYKTDM9DD6Y4HHBV0RYSB',
-                    code: code,
-                    redirect_uri: 'https://jdsezer942.github.io/kick-turnuva/callback.html',
-                    code_verifier: localStorage.getItem('kick_verifier')
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.access_token) {
-                    localStorage.setItem('kick_token', data.access_token);
-                    window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
-                }
-            });
-        }
-    </script>
+  <p>Giriş başarılı! Ana sayfaya dönülüyor...</p>
+
+  <script>
+    // ────────────────────────────────────────────────
+    // DEĞİŞTİRMEN GEREKEN TEK YER BURASI
+    // ────────────────────────────────────────────────
+    const CLIENT_ID     = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
+    const REDIRECT_URI  = "https://jdsezer942.github.io/kick-turnuva/callback.html";
+    // ────────────────────────────────────────────────
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const error = urlParams.get('error');
+
+    if (error) {
+      alert("Hata: " + error + "\n\nLütfen Kick hesabınla tekrar dene.");
+      window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
+      return;
+    }
+
+    if (!code) {
+      alert("Yetki kodu alınamadı!");
+      window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
+      return;
+    }
+
+    const verifier = localStorage.getItem('kick_code_verifier');
+
+    if (!verifier) {
+      alert("Code verifier kayboldu, lütfen tekrar dene.");
+      window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
+      return;
+    }
+
+    fetch('https://id.kick.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type:    'authorization_code',
+        client_id:     CLIENT_ID,
+        code:          code,
+        redirect_uri:  REDIRECT_URI,
+        code_verifier: verifier
+      })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Token alınamadı: " + res.status);
+      return res.json();
+    })
+    .then(data => {
+      if (data.access_token) {
+        localStorage.setItem('kick_token', data.access_token);
+        // İstersen refresh_token da sakla: data.refresh_token
+        window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
+      } else {
+        alert("Access token alınamadı: " + (data.error || "bilinmeyen hata"));
+      }
+    })
+    .catch(err => {
+      alert("Bağlantı hatası: " + err.message);
+      window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
+    });
+  </script>
 </body>
 </html>
 
