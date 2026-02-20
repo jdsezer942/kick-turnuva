@@ -5,51 +5,46 @@
   <title>Kick ile Giriş</title>
 </head>
 <body>
-  <p>Giriş sayfasına yönlendiriliyorsun...</p>
+  <p>Giriş sayfasına yönlendiriliyorsun... Lütfen bekle.</p>
 
   <script>
-    // ────────────────────────────────────────────────
-    // DEĞİŞTİRMEN GEREKEN TEK YER BURASI
-    // ────────────────────────────────────────────────
-    const CLIENT_ID     = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
-    const REDIRECT_URI  = "https://jdsezer942.github.io/kick-turnuva/callback.html";
-    // ────────────────────────────────────────────────
+    const CLIENT_ID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
+    const REDIRECT_URI = "https://jdsezer942.github.io/kick-turnuva/callback.html";
 
-    // PKCE için random code_verifier oluştur (43-128 karakter arası önerilir)
+    // Rastgele state oluştur (CSRF koruması için zorunlu)
+    const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('kick_state', state);
+
+    // PKCE code_verifier ve code_challenge oluştur
     function generateCodeVerifier() {
       const array = new Uint8Array(32);
       crypto.getRandomValues(array);
       return btoa(String.fromCharCode(...array))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
     }
 
-    // code_verifier → code_challenge (S256 = base64url(SHA256(verifier)))
     async function generateCodeChallenge(verifier) {
       const encoder = new TextEncoder();
       const data = encoder.encode(verifier);
       const hash = await crypto.subtle.digest('SHA-256', data);
       const hashArray = new Uint8Array(hash);
       return btoa(String.fromCharCode(...hashArray))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
     }
 
     (async () => {
       const verifier = generateCodeVerifier();
       localStorage.setItem('kick_code_verifier', verifier);
-
       const challenge = await generateCodeChallenge(verifier);
 
       const params = new URLSearchParams({
-        client_id:     CLIENT_ID,
-        redirect_uri:  REDIRECT_URI,
         response_type: 'code',
-        scope:         'user:read channel:read',   // ihtiyacına göre genişletebilirsin
+        client_id: CLIENT_ID,
+        redirect_uri: REDIRECT_URI,
+        scope: 'user:read channel:read',  // İstersen daha fazla ekleyebilirsin
         code_challenge_method: 'S256',
-        code_challenge: challenge
+        code_challenge: challenge,
+        state: state                      // ← BU YENİ VE ZORUNLU
       });
 
       const authUrl = `https://id.kick.com/oauth/authorize?${params.toString()}`;
