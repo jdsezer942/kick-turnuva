@@ -5,7 +5,8 @@
     <script>
         const clientID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
         const redirect = "https://jdsezer942.github.io/kick-turnuva/callback.html";
-        const verifier = Math.random().toString(36).substring(2, 15);
+        // PKCE için basit bir verifier
+        const verifier = "ramazan_ozel_2026"; 
         localStorage.setItem('kick_verifier', verifier);
 
         const params = new URLSearchParams({
@@ -16,6 +17,7 @@
             code_challenge_method: 'plain',
             code_challenge: verifier
         });
+
         window.location.href = `https://id.kick.com/oauth/authorize?${params.toString()}`;
     </script>
 </body>
