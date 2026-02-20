@@ -5,19 +5,18 @@
     <script>
         const clientID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
         const redirect = "https://jdsezer942.github.io/kick-turnuva/callback.html";
-        const verifier = "static_verifier_12345"; // Test için sabit tutalım
+        const verifier = Math.random().toString(36).substring(2, 15);
         localStorage.setItem('kick_verifier', verifier);
 
-        // Scope kısmını tek bir kelimeye indirerek hatayı eleyelim
-        const authUrl = "https://id.kick.com/oauth/authorize?" + 
-            "client_id=" + clientID + 
-            "&redirect_uri=" + encodeURIComponent(redirect) + 
-            "&response_type=code" + 
-            "&scope=user:read" + // Sadece tek bir yetki isteyelim (Hata riskini azaltır)
-            "&code_challenge_method=plain" + 
-            "&code_challenge=" + verifier;
-
-        window.location.href = authUrl;
+        const params = new URLSearchParams({
+            client_id: clientID,
+            redirect_uri: redirect,
+            response_type: 'code',
+            scope: 'user:read channel:read',
+            code_challenge_method: 'plain',
+            code_challenge: verifier
+        });
+        window.location.href = `https://id.kick.com/oauth/authorize?${params.toString()}`;
     </script>
 </body>
 </html>
