@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <p>Giriş yapılıyor...</p>
+    <script>
+        const code = new URLSearchParams(window.location.search).get('code');
+        if (code) {
+            fetch('https://id.kick.com/oauth/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    grant_type: 'authorization_code',
+                    client_id: '01KHSMYKTDM9DD6Y4HHBV0RYSB',
+                    code: code,
+                    redirect_uri: 'https://jdsezer942.github.io/kick-turnuva/callback.html',
+                    code_verifier: localStorage.getItem('kick_verifier')
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                localStorage.setItem('kick_token', data.access_token);
+                window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
+            });
+        }
+    </script>
+</body>
+</html>
