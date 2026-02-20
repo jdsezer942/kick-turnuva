@@ -1,15 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
+<head><meta charset="UTF-8"></head>
 <body>
     <script>
         async function start() {
             const clientID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
             const redirect = "https://jdsezer942.github.io/kick-turnuva/callback.html";
-            const verifier = Math.random().toString(36).substring(2, 15);
+            
+            // PKCE için güvenli verifier
+            const verifier = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
             localStorage.setItem('kick_verifier', verifier);
 
-            const url = `https://id.kick.com/oauth/authorize?client_id=${clientID}&redirect_uri=${encodeURIComponent(redirect)}&response_type=code&scope=user:read%20channel:read&code_challenge_method=plain&code_challenge=${verifier}`;
-            window.location.href = url;
+            // URL Parametrelerini manuel birleştirmek yerine bu yöntem daha güvenlidir
+            const params = new URLSearchParams({
+                client_id: clientID,
+                redirect_uri: redirect,
+                response_type: 'code',
+                scope: 'user:read channel:read', // Boşluğu tarayıcı otomatik ayarlar
+                code_challenge_method: 'plain',
+                code_challenge: verifier
+            });
+
+            window.location.href = `https://id.kick.com/oauth/authorize?${params.toString()}`;
         }
         start();
     </script>
