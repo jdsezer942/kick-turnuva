@@ -1,23 +1,60 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head><meta charset="UTF-8"></head>
+<head>
+  <meta charset="UTF-8">
+  <title>Kick ile Giriş</title>
+</head>
 <body>
-    <script>
-        const clientID = "01KHSMYKTDM9DD6Y4HHBV0RYSB"; // Senin ClientID'n
-        const redirect = "https://jdsezer942.github.io/kick-turnuva/callback.html";
-        const verifier = "ozel_ramazan_2026"; 
-        localStorage.setItem('kick_verifier', verifier);
+  <p>Giriş sayfasına yönlendiriliyorsun...</p>
 
-        const params = new URLSearchParams({
-            client_id: clientID,
-            redirect_uri: redirect,
-            response_type: 'code',
-            scope: 'user:read channel:read', // Sadece 2 yetki
-            code_challenge_method: 'plain',
-            code_challenge: verifier
-        });
+  <script>
+    // ────────────────────────────────────────────────
+    // DEĞİŞTİRMEN GEREKEN TEK YER BURASI
+    // ────────────────────────────────────────────────
+    const CLIENT_ID     = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
+    const REDIRECT_URI  = "https://jdsezer942.github.io/kick-turnuva/callback.html";
+    // ────────────────────────────────────────────────
 
-        window.location.href = `https://id.kick.com/oauth/authorize?${params.toString()}`;
-    </script>
+    // PKCE için random code_verifier oluştur (43-128 karakter arası önerilir)
+    function generateCodeVerifier() {
+      const array = new Uint8Array(32);
+      crypto.getRandomValues(array);
+      return btoa(String.fromCharCode(...array))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+    }
+
+    // code_verifier → code_challenge (S256 = base64url(SHA256(verifier)))
+    async function generateCodeChallenge(verifier) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(verifier);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = new Uint8Array(hash);
+      return btoa(String.fromCharCode(...hashArray))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+    }
+
+    (async () => {
+      const verifier = generateCodeVerifier();
+      localStorage.setItem('kick_code_verifier', verifier);
+
+      const challenge = await generateCodeChallenge(verifier);
+
+      const params = new URLSearchParams({
+        client_id:     CLIENT_ID,
+        redirect_uri:  REDIRECT_URI,
+        response_type: 'code',
+        scope:         'user:read channel:read',   // ihtiyacına göre genişletebilirsin
+        code_challenge_method: 'S256',
+        code_challenge: challenge
+      });
+
+      const authUrl = `https://id.kick.com/oauth/authorize?${params.toString()}`;
+      window.location.href = authUrl;
+    })();
+  </script>
 </body>
 </html>
