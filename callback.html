@@ -1,69 +1,83 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head><meta charset="UTF-8"><title>Giriş Tamamlanıyor...</title></head>
-<body style="background:#111;color:#fff;text-align:center;padding:50px;font-size:20px;">
+<head>
+  <meta charset="UTF-8">
+  <title>Giriş Tamamlanıyor...</title>
+</head>
+<body style="background:#111; color:#fff; text-align:center; padding:50px; font-size:20px;">
   <p>Giriş tamamlanıyor, lütfen bekle...</p>
   <p id="status">Durum: Bekleniyor...</p>
 
   <script>
-    document.getElementById('status').innerText = 'Code alındı → Token alınıyor...';
+    // Tüm kodu bir fonksiyona sardık → return'ler artık yasal
+    (function() {
+      document.getElementById('status').innerText = 'Code kontrol ediliyor...';
 
-    const CLIENT_ID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
-    const CLIENT_SECRET = "b089747d86bf523272990a3b9c9108b7d002ee0cd928fba42dd2104a4e7fe57e"; // secret'ini doğrula
-    const REDIRECT_URI = "https://jdsezer942.github.io/kick-turnuva/callback.html";
+      const CLIENT_ID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
+      const CLIENT_SECRET = "b089747d86bf523272990a3b9c9108b7d002ee0cd928fba42dd2104a4e7fe57e"; // secret'ini doğrula
+      const REDIRECT_URI = "https://jdsezer942.github.io/kick-turnuva/callback.html";
 
-    const params = new URLSearchParams(location.search);
-    const code = params.get('code');
-    const state = params.get('state');
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const state = params.get('state');
 
-    if (!code) {
-      document.getElementById('status').innerText = 'Hata: Code yok!';
-      alert('Code alınamadı!');
-      return;
-    }
-
-    if (state !== localStorage.getItem('kick_state')) {
-      document.getElementById('status').innerText = 'Hata: State uyuşmuyor!';
-      alert('Güvenlik hatası!');
-      return;
-    }
-
-    const verifier = localStorage.getItem('kick_verifier');
-    if (!verifier) {
-      alert('Verifier kayıp!');
-      return;
-    }
-
-    fetch('https://id.kick.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        grant_type: 'authorization_code',
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,  // Eğer hata verirse bu satırı silip dene
-        code: code,
-        redirect_uri: REDIRECT_URI,
-        code_verifier: verifier
-      })
-    })
-    .then(res => {
-      document.getElementById('status').innerText = 'Yanıt: ' + res.status;
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
-    .then(data => {
-      if (data.access_token) {
-        localStorage.setItem('kick_token', data.access_token);
-        document.getElementById('status').innerText = 'Başarılı! Turnuvaya dönülüyor...';
-        location.href = 'https://jdsezer942.github.io/kick-turnuva/';
-      } else {
-        alert('Token hatası: ' + (data.error || 'Bilinmiyor'));
+      if (!code) {
+        document.getElementById('status').innerText = 'Hata: Code alınamadı!';
+        alert('Code alınamadı! Tekrar dene.');
+        return;  // ← Artık fonksiyon içinde, hata vermez
       }
-    })
-    .catch(err => {
-      document.getElementById('status').innerText = 'HATA: ' + err.message;
-      alert('Hata: ' + err.message + ' (F12 > Network bak)');
-    });
+
+      if (state !== localStorage.getItem('kick_state')) {
+        document.getElementById('status').innerText = 'Hata: State uyuşmuyor!';
+        alert('Güvenlik hatası (state uyuşmazlığı)!');
+        return;
+      }
+
+      const verifier = localStorage.getItem('kick_verifier');
+      if (!verifier) {
+        document.getElementById('status').innerText = 'Hata: Verifier kayboldu!';
+        alert('Verifier bulunamadı!');
+        return;
+      }
+
+      document.getElementById('status').innerText = 'Token alınıyor... (bekle)';
+
+      fetch('https://id.kick.com/oauth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          grant_type: 'authorization_code',
+          client_id: CLIENT_ID,
+          client_secret: CLIENT_SECRET,
+          code: code,
+          redirect_uri: REDIRECT_URI,
+          code_verifier: verifier
+        })
+      })
+      .then(res => {
+        document.getElementById('status').innerText = 'Yanıt geldi: Status ' + res.status;
+        if (!res.ok) {
+          return res.text().then(text => { throw new Error('HTTP ' + res.status + ': ' + text); });
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data.access_token) {
+          localStorage.setItem('kick_token', data.access_token);
+          document.getElementById('status').innerText = 'Başarılı! Turnuva sayfasına dönülüyor...';
+          setTimeout(() => {
+            window.location.href = "https://jdsezer942.github.io/kick-turnuva/";
+          }, 1500);  // 1.5 sn bekle ki status görünsün
+        } else {
+          document.getElementById('status').innerText = 'Token alınamadı!';
+          alert('Token hatası: ' + (data.error_description || data.error || JSON.stringify(data)));
+        }
+      })
+      .catch(err => {
+        document.getElementById('status').innerText = 'HATA: ' + err.message;
+        alert('Hata: ' + err.message + '\nF12 → Network sekmesine bak!');
+      });
+    })();
   </script>
 </body>
 </html>
