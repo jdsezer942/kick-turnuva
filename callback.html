@@ -2,7 +2,7 @@
 <html>
 <head><meta charset="UTF-8"></head>
 <body>
-    <p>Giriş başarılı! Blogger'a yönlendiriliyorsunuz...</p>
+    <p>Giriş başarılı! Yönlendiriliyorsunuz...</p>
     <script>
         const code = new URLSearchParams(window.location.search).get('code');
         if (code) {
@@ -23,9 +23,9 @@
                     localStorage.setItem('kick_token', data.access_token);
                     window.location.href = "https://jdsezer.blogspot.com/2026/02/kick-snav.html";
                 }
-            })
-            .catch(err => console.error(err));
+            });
         }
     </script>
 </body>
 </html>
+
