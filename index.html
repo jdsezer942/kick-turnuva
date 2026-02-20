@@ -3,7 +3,7 @@
 <head><meta charset="UTF-8"></head>
 <body>
     <script>
-        const clientID = "01KHSMYKTDM9DD6Y4HHBV0RYSB";
+        const clientID = "01KHSMYKTDM9DD6Y4HHBV0RYSB"; // Senin ClientID'n
         const redirect = "https://jdsezer942.github.io/kick-turnuva/callback.html";
         const verifier = "ozel_ramazan_2026"; 
         localStorage.setItem('kick_verifier', verifier);
@@ -12,7 +12,7 @@
             client_id: clientID,
             redirect_uri: redirect,
             response_type: 'code',
-            scope: 'user:read channel:read',
+            scope: 'user:read channel:read', // Sadece 2 yetki
             code_challenge_method: 'plain',
             code_challenge: verifier
         });
